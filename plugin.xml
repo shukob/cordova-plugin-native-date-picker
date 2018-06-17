@@ -1,0 +1,21 @@
+<?xml version='1.0' encoding='utf-8'?>
+<plugin id="cordova-plugin-native-date-picker" version="0.1.0" xmlns="http://apache.org/cordova/ns/plugins/1.0"
+        xmlns:android="http://schemas.android.com/apk/res/android">
+    <name>native-date-picker</name>
+    <js-module name="native-date-picker" src="www/native-date-picker.js">
+        <clobbers target="NativeDatePicker"/>
+    </js-module>
+
+    <platform name="android">
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="native-date-picker">
+                <param name="android-package" value="is.w_ax.cordova.plugin.native_date_picker.DatePicker"/>
+            </feature>
+        </config-file>
+
+        <source-file src="src/android/is/w_ax/cordova/plugin/native_date_picker/DatePicker.java" target-dir="src/is/w_ax/cordova/plugin/native_date_picker"/>
+        <source-file src="src/android/res/values/native_datepicker_style.xml" target-dir="res/values" />
+        <framework src="com.android.support:support-v4:24.1.1+"/>
+        <framework src="src/android/plugin.gradle" custom="true" type="gradleReference"/>
+    </platform>
+</plugin>

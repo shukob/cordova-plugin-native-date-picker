@@ -1,0 +1,10 @@
+allprojects {
+    repositories {
+        maven { url "https://jitpack.io" }
+	   }
+}
+
+dependencies {
+    compile 'com.github.drawers:SpinnerDatePicker:1.0.6'
+	compile "com.android.support:appcompat-v7:24.1.1+"
+}

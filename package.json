@@ -1,0 +1,21 @@
+{"name": "cordova-plugin-native-date-picker",
+    "version": "1.0.0-beta",
+    "description": "Date Picker for Apache Cordova",
+    "cordova": {
+        "id": "cordova-plugin-native-date-picker",
+        "platforms": [
+            "android"
+        ]
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/skonb/cordova-plugin-native-date-picker"
+    },
+    "keywords": [
+        "cordova",
+        "camera",
+        "cordova-ios"
+    ],
+    "author": "donaldp24",
+"license": "MIT"
+}
