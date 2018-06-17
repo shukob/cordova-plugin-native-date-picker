@@ -1,132 +1,141 @@
-package com.tsongkha.spinnerdatepicker;
+/*
+       Licensed to the Apache Software Foundation (ASF) under one
+       or more contributor license agreements.  See the NOTICE file
+       distributed with this work for additional information
+       regarding copyright ownership.  The ASF licenses this file
+       to you under the Apache License, Version 2.0 (the
+       "License"); you may not use this file except in compliance
+       with the License.  You may obtain a copy of the License at
 
+         http://www.apache.org/licenses/LICENSE-2.0
+
+       Unless required by applicable law or agreed to in writing,
+       software distributed under the License is distributed on an
+       "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+       KIND, either express or implied.  See the License for the
+       specific language governing permissions and limitations
+       under the License.
+*/
+package is.w_ax.cordova.plugin.native_date_picker;
+
+import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.Context;
+import android.app.Dialog;
 import android.content.DialogInterface;
-import android.content.DialogInterface.OnClickListener;
-import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 
-import java.text.DateFormat;
+import com.tsongkha.spinnerdatepicker.DatePickerDialog;
+import com.tsongkha.spinnerdatepicker.SpinnerDatePickerDialogBuilder;
+
+import org.apache.cordova.BuildHelper;
+import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.PluginResult;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
+
 
 /**
- * A fork of the Android Open Source Project DatePickerDialog class
+ * This class launches the camera view, allows the user to take a picture, closes the camera view,
+ * and returns the captured image.  When the camera view is closed, the screen displayed before
+ * the camera view was shown is redisplayed.
  */
-public class DatePickerDialog extends AlertDialog implements OnClickListener,
-        OnDateChangedListener {
+public class DatePicker extends CordovaPlugin {
 
-    private static final String YEAR = "year";
-    private static final String MONTH = "month";
-    private static final String DAY = "day";
-    private static final String TITLE_SHOWN = "title_enabled";
-
-    private final DatePicker mDatePicker;
-    private final OnDateSetListener mCallBack;
-    private final DateFormat mTitleDateFormat;
-
-    private boolean mIsDayShown = true;
-    private boolean mIsTitleShown = true;
+    public CallbackContext callbackContext;
+    public String applicationId;
+    protected SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd");
 
     /**
-     * The callback used to indicate the user is done filling in the date.
+     * Executes the request and returns PluginResult.
+     *
+     * @param action          The action to execute.
+     * @param args            JSONArry of arguments for the plugin.
+     * @param callbackContext The callback id used when calling back into JavaScript.
+     * @return A PluginResult object with a status and message.
      */
-    public interface OnDateSetListener {
-        /**
-         * @param view        The view associated with this listener.
-         * @param year        The year that was set
-         * @param monthOfYear The month that was set (0-11) for compatibility
-         *                    with {@link java.util.Calendar}.
-         * @param dayOfMonth  The day of the month that was set.
-         */
-        void onDateSet(DatePicker view, int year, int monthOfYear, int dayOfMonth);
-    }
+    public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+        this.callbackContext = callbackContext;
+        //Adding an API to CoreAndroid to get the BuildConfigValue
+        //This allows us to not make this a breaking change to embedding
+        this.applicationId = (String) BuildHelper.getBuildConfigValue(cordova.getActivity(), "APPLICATION_ID");
+        this.applicationId = preferences.getString("applicationId", this.applicationId);
 
-    DatePickerDialog(Context context,
-                     int theme,
-                     int spinnerTheme,
-                     OnDateSetListener callBack,
-                     Calendar defaultDate,
-                     Calendar minDate,
-                     Calendar maxDate,
-                     boolean isDayShown,
-                     boolean isTitleShown) {
-        super(context, theme);
 
-        mCallBack = callBack;
-        mTitleDateFormat = DateFormat.getDateInstance(DateFormat.LONG);
-        mIsDayShown = isDayShown;
-        mIsTitleShown = isTitleShown;
+        if (action.equals("show")) {
+            try {
+                Activity activity = cordova.getActivity();
+                Date date = new Date();
+                if (args.length() > 0) {
+                    JSONObject obj = args.getJSONObject(0);
+                    if (obj.has("date")) {
+                        String dateString = obj.getString("date");
+                        date = simpleDateFormat.parse(dateString);
+                    }
+                }
+                Calendar calendar = Calendar.getInstance();
+                calendar.setTime(date);
+                int spinnerTheme = getAppResource("NumberPickerStyle", "style");
+                int dialogTheme = getAppResource("DialogStyle", "style");
+                DatePickerDialog dialog = new SpinnerDatePickerDialogBuilder()
+                        .context(activity)
+                        .callback(new DatePickerDialog.OnDateSetListener() {
+                            @Override
+                            public void onDateSet(com.tsongkha.spinnerdatepicker.DatePicker view, int year, int monthOfYear, int dayOfMonth) {
+                                try {
+                                    JSONObject resultJson = new JSONObject();
+                                    resultJson.put("year", year);
+                                    resultJson.put("monthOfYear", monthOfYear);
+                                    resultJson.put("dayOfMonth", dayOfMonth);
+                                    PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, resultJson);
+                                    callbackContext.sendPluginResult(pluginResult);
+                                } catch (JSONException e) {
+                                    callbackContext.error(e.getLocalizedMessage());
+                                }
 
-        updateTitle(defaultDate);
+                            }
+                        })
+                        .spinnerTheme(spinnerTheme)
+                        .dialogTheme(dialogTheme)
+                        .showTitle(true)
+                        .showDaySpinner(true)
+                        .defaultDate(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH))
+                        .maxDate(2030, 0, 1)
+                        .minDate(1920, 0, 1)
+                        .build();
+                dialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                    @Override
+                    public void onCancel(DialogInterface dialogInterface) {
+                        PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
+                        callbackContext.sendPluginResult(pluginResult);
+                    }
+                });
+                dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
+                    @Override
+                    public void onDismiss(DialogInterface dialogInterface) {
+                        PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
+                        callbackContext.sendPluginResult(pluginResult);
+                    }
+                });
 
-        setButton(BUTTON_POSITIVE, context.getText(android.R.string.ok),
-                this);
-        setButton(BUTTON_NEGATIVE, context.getText(android.R.string.cancel),
-                (OnClickListener) null);
 
-        LayoutInflater inflater =
-                (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View view = inflater.inflate(R.layout.date_picker_dialog_container, null);
-        setView(view);
-        mDatePicker = new DatePicker((ViewGroup) view, spinnerTheme);
-        mDatePicker.setMinDate(minDate.getTimeInMillis());
-        mDatePicker.setMaxDate(maxDate.getTimeInMillis());
-        mDatePicker.init(defaultDate.get(Calendar.YEAR), defaultDate.get(Calendar.MONTH), defaultDate.get(Calendar.DAY_OF_MONTH), isDayShown, this);
 
-    }
+                dialog.show();
+            } catch (Exception e) {
+                callbackContext.error("Failed to get activity");
+            }
 
-    @Override
-    public void onClick(DialogInterface dialog, int which) {
-        if (mCallBack != null) {
-            mDatePicker.clearFocus();
-            mCallBack.onDateSet(mDatePicker, mDatePicker.getYear(),
-                    mDatePicker.getMonth(), mDatePicker.getDayOfMonth());
+
+            return true;
         }
+        return false;
     }
 
-    @Override
-    public void onDateChanged(DatePicker view, int year, int monthOfYear, int dayOfMonth) {
-        Calendar updatedDate = Calendar.getInstance();
-        updatedDate.set(Calendar.YEAR, year);
-        updatedDate.set(Calendar.MONTH, monthOfYear);
-        updatedDate.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-        updateTitle(updatedDate);
-    }
-
-    private void updateTitle(Calendar updatedDate) {
-        if(mIsTitleShown) {
-            final DateFormat dateFormat = mTitleDateFormat;
-            setTitle(dateFormat.format(updatedDate.getTime()));
-        } else {
-            setTitle(" ");
-        }
-    }
-
-    @Override
-    public Bundle onSaveInstanceState() {
-        Bundle state = super.onSaveInstanceState();
-        state.putInt(YEAR, mDatePicker.getYear());
-        state.putInt(MONTH, mDatePicker.getMonth());
-        state.putInt(DAY, mDatePicker.getDayOfMonth());
-        state.putBoolean(TITLE_SHOWN, mIsTitleShown);
-        return state;
-    }
-
-    @Override
-    public void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        int year = savedInstanceState.getInt(YEAR);
-        int month = savedInstanceState.getInt(MONTH);
-        int day = savedInstanceState.getInt(DAY);
-        mIsTitleShown = savedInstanceState.getBoolean(TITLE_SHOWN);
-        Calendar c = Calendar.getInstance();
-        c.set(Calendar.YEAR, year);
-        c.set(Calendar.MONTH, month);
-        c.set(Calendar.DAY_OF_MONTH, day);
-        updateTitle(c);
-        mDatePicker.init(year, month, day, mIsDayShown, this);
+    private int getAppResource(String name, String type) {
+        return cordova.getActivity().getResources().getIdentifier(name, type, cordova.getActivity().getPackageName());
     }
 }
