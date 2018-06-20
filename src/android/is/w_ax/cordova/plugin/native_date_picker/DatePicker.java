@@ -92,9 +92,9 @@ public class DatePicker extends CordovaPlugin {
                                     resultJson.put("monthOfYear", monthOfYear);
                                     resultJson.put("dayOfMonth", dayOfMonth);
                                     PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, resultJson);
-                                    callbackContext.sendPluginResult(pluginResult);
+                                    DatePicker.this.callbackContext.sendPluginResult(pluginResult);
                                 } catch (JSONException e) {
-                                    callbackContext.error(e.getLocalizedMessage());
+                                    DatePicker.this.callbackContext.error(e.getLocalizedMessage());
                                 }
 
                             }
@@ -111,14 +111,14 @@ public class DatePicker extends CordovaPlugin {
                     @Override
                     public void onCancel(DialogInterface dialogInterface) {
                         PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
-                        callbackContext.sendPluginResult(pluginResult);
+                        DatePicker.this.callbackContext.sendPluginResult(pluginResult);
                     }
                 });
                 dialog.setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
                     public void onDismiss(DialogInterface dialogInterface) {
                         PluginResult pluginResult = new PluginResult(PluginResult.Status.NO_RESULT);
-                        callbackContext.sendPluginResult(pluginResult);
+                        DatePicker.this.callbackContext.sendPluginResult(pluginResult);
                     }
                 });
 
