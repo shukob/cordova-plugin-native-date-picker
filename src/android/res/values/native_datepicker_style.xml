@@ -4,6 +4,7 @@
         <item name="android:textSize">22dp</item>
         <item name="android:textColorPrimary">@android:color/darker_gray</item>
         <item name="android:colorControlNormal" tools:targetApi="lollipop">#5DDBE0</item>
+        <item name="android:editTextColor">@android:color/darker_gray</item>
     </style>
 
     <style name="DialogStyle" parent="Theme.AppCompat.Light.Dialog.Alert">
